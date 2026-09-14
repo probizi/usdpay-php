@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php-version: ['8.1', '8.2', '8.3', '8.4']
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          extensions: curl
+          coverage: none
+      - name: Validate Composer metadata
+        run: composer validate --strict
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist
+      - name: Check PSR-12 style
+        run: vendor/bin/phpcs --standard=PSR12 --warning-severity=0 src tests
+      - name: Run tests
+        run: vendor/bin/phpunit
